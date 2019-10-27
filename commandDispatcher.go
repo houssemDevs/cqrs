@@ -12,12 +12,12 @@ type CommandDispatcher interface {
 	UseMiddleware(mds ...CommandMiddleware)
 }
 
-type commandDispatcher struct {
+type inProcessCommandDispatcher struct {
 	handlers map[string]CommandHandler
 	middlewares []CommandMiddleware
 }
 
-func (cd *commandDispatcher) RegisterHandler(handler CommandHandler, c Command, mds ...CommandMiddleware) {
+func (cd *inProcessCommandDispatcher) RegisterHandler(handler CommandHandler, c Command, mds ...CommandMiddleware) {
 	for _, md := range mds {
 		handler = md(handler)
 	}
@@ -29,7 +29,7 @@ func (cd *commandDispatcher) RegisterHandler(handler CommandHandler, c Command, 
 	cd.handlers[c.CommandType()] = handler
 }
 
-func (cd *commandDispatcher) Dispatch(c Command) error {
+func (cd *inProcessCommandDispatcher) Dispatch(c Command) error {
 	if handler, found := cd.handlers[c.CommandType()]; found {
 		for _, md := range cd.middlewares {
 			handler = md(handler)
@@ -41,16 +41,16 @@ func (cd *commandDispatcher) Dispatch(c Command) error {
 	panic(fmt.Sprintf("No handler registred for command '%s'", c.CommandType()))
 }
 
-func (cd *commandDispatcher) UseMiddleware(mds ...CommandMiddleware) {
+func (cd *inProcessCommandDispatcher) UseMiddleware(mds ...CommandMiddleware) {
 	cd.middlewares = append(cd.middlewares, mds...)
 }
 
 var onceCd sync.Once
-var cd *commandDispatcher
+var cd *inProcessCommandDispatcher
 
-func CommandDispatcherInstance() *commandDispatcher {
+func InProcessCommandDispatcherInstance() *inProcessCommandDispatcher {
 	onceCd.Do(func() {
-		cd = &commandDispatcher{make(map[string]CommandHandler), []CommandMiddleware{}}
+		cd = &inProcessCommandDispatcher{make(map[string]CommandHandler), []CommandMiddleware{}}
 	})
 
 	return cd

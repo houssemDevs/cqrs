@@ -1,6 +1,10 @@
 package cqrs
 
-import "sync"
+import (
+	"fmt"
+	"log"
+	"sync"
+)
 
 type EventPublisher interface {
 	RegisterListener(eh EventHandler)
@@ -8,25 +12,33 @@ type EventPublisher interface {
 }
 
 type eventPublisher struct {
-	listeners []EventHandler
+	listeners map[string][]EventHandler
 }
 
-func (ep *eventPublisher) RegisterListener(eh EventHandler) {
-	ep.listeners = append(ep.listeners, eh)
+func (ep *eventPublisher) RegisterListener(eh EventHandler, events ...Event) {
+	for _, event := range events {
+		if handlers, ok := ep.listeners[event.EventType()]; ok {
+			handlers = append(handlers, eh)
+		}
+	}
 }
 
 func (ep *eventPublisher) Publish(ev Event) {
-	for _, eh := range ep.listeners {
-		eh.HandleEvent(ev)
+	if handlers, ok := ep.listeners[ev.EventType()]; ok {
+		for _, h := range handlers {
+			h.HandleEvent(ev)
+		}
+	} else {
+		log.Println(fmt.Sprintf("no handler for event '%s'", ev.EventType()))
 	}
 }
 
 var onceEp sync.Once
 var ep *eventPublisher
 
-func EventPublisherInstance() *eventPublisher {
+func InProcessEventPublisherInstance() *eventPublisher {
 	onceEp.Do(func() {
-		ep = &eventPublisher{[]EventHandler{}}
+		ep = &eventPublisher{make(map[string][]EventHandler)}
 	})
 
 	return ep
