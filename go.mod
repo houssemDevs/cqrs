@@ -1,4 +1,4 @@
-module hn.dz/cqrs
+module github.com/houssemdevs/cqrs
 
 go 1.12
 
