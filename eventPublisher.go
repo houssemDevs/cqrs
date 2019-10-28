@@ -19,6 +19,7 @@ func (ep *eventPublisher) RegisterListener(eh EventHandler, events ...Event) {
 	for _, event := range events {
 		if handlers, ok := ep.listeners[event.EventType()]; ok {
 			handlers = append(handlers, eh)
+			ep.listeners[event.EventType()] = handlers
 		}
 	}
 }
