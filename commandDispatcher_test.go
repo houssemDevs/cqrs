@@ -9,6 +9,17 @@ import (
 	"github.com/google/uuid"
 )
 
+type State struct {
+	Todos []Todo
+}
+
+type Todo struct {
+	Text string
+	Done bool
+}
+
+var testState State
+
 type BaseCommand struct {
 	id            uuid.UUID
 	correlationID uuid.UUID
@@ -70,7 +81,7 @@ func (c DeleteTodo) CommandType() string {
 
 var AddTodoToList = CommandHandlerFunc(func(c Command) error {
 	if c, ok := c.(AddTodo); ok {
-		log.Println("Adding todo to list ", c.Text)
+		testState.Todos = append(testState.Todos, Todo{c.Text, false})
 		return nil
 	}
 	return errors.New("Unknow command " + reflect.TypeOf(c).Name())
@@ -99,6 +110,9 @@ func TestInProcessCommandDispatcher(t *testing.T) {
 		err := InProcessCommandDispatcherInstance().Dispatch(NewAddTodo("doing basic cqrs"))
 		if err != nil {
 			t.Error(err.Error())
+		}
+		if len(testState.Todos) != 1 {
+			t.Error("Command not dispatched")
 		}
 	})
 
