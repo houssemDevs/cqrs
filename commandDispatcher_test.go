@@ -10,16 +10,26 @@ import (
 )
 
 type BaseCommand struct {
+	id            uuid.UUID
 	correlationID uuid.UUID
+	causationID   uuid.UUID
 }
 
 func NewBaseCommand() BaseCommand {
 	uuid, _ := uuid.NewUUID()
-	return BaseCommand{uuid}
+	return BaseCommand{uuid, uuid, uuid}
 }
 
 func (c BaseCommand) CorrelationID() uuid.UUID {
 	return c.correlationID
+}
+
+func (c BaseCommand) CausationID() uuid.UUID {
+	return c.causationID
+}
+
+func (c BaseCommand) Id() uuid.UUID {
+	return c.id
 }
 
 type AddTodo struct {
